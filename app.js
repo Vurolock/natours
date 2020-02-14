@@ -5,13 +5,10 @@ const app = express();
 
 app.use(express.json());
 
-// app.get('/', (req, res) => {
-//   res.status(200).json({ message: 'server says hi', app: 'natours' });
-// });
-
-// app.post('/', (req, res) => {
-//   res.send('post here!');
-// });
+app.use((req, res, next) => {
+  req.time = new Date().toISOString();
+  next();
+});
 
 const toursEndpoint = '/api/v1/tours';
 
@@ -19,17 +16,18 @@ const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
 );
 
-app.get(toursEndpoint, (req, res) => {
+const getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
     results: tours.length,
+    time: req.time,
     data: {
       tours
     }
   });
-});
+};
 
-app.get(`${toursEndpoint}/:id`, (req, res) => {
+const getTour = (req, res) => {
   const id = parseInt(req.params.id, 10);
   const tour = tours.find(tour => tour.id === id);
   if (!tour) {
@@ -44,9 +42,9 @@ app.get(`${toursEndpoint}/:id`, (req, res) => {
       tour
     }
   });
-});
+};
 
-app.post(toursEndpoint, (req, res) => {
+const createTour = (req, res) => {
   const newId = tours[tours.length - 1].id + 1;
   const newTour = Object.assign({ id: newId }, req.body);
   tours.push(newTour);
@@ -62,7 +60,35 @@ app.post(toursEndpoint, (req, res) => {
       });
     }
   );
-});
+};
+
+const updateTour = (req, res) => {
+  // update logic here
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tour: 'patch placeholder'
+    }
+  });
+};
+
+const deleteTour = (req, res) => {
+  // delete logic here
+  res.status(204).json({
+    status: 'success',
+    data: null
+  });
+};
+
+app
+  .route(toursEndpoint)
+  .get(getAllTours)
+  .post(createTour);
+app
+  .route(`${toursEndpoint}/:id`)
+  .get(getTour)
+  .patch(updateTour)
+  .delete(deleteTour);
 
 const port = 3000;
 app.listen(port, () => {
